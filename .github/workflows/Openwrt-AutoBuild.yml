@@ -150,7 +150,7 @@ jobs:
             git clone $REPO_URL -b ${{ env.REPO_BRANCH }} openwrt
             echo "git clone $REPO_URL -b ${{ env.REPO_BRANCH }} openwrt"
         fi
-    
+      cd ./openwrt/ && tar -xJf openwrt.tar.xz --strip-components=1 && rm openwrt.tar.xz
     - name: Free up disk space
       env:
         DEBIAN_FRONTEND: noninteractive
