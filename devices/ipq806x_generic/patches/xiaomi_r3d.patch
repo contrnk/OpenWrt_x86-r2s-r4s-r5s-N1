@@ -119,7 +119,20 @@ index cb32a4ed3568d..9d9ab3f100fe2 100755
 +		;;
  	esac
  }
-
+diff --git a/target/linux/ipq806x/base-files/lib/upgrade/platform.sh b/target/linux/ipq806x/base-files/lib/upgrade/platform.sh
+index 5ec4f513bd33d..b142fce86a082 100644
+--- a/target/linux/ipq806x/base-files/lib/upgrade/platform.sh
++++ b/target/linux/ipq806x/base-files/lib/upgrade/platform.sh
+@@ -71,6 +71,9 @@ platform_do_upgrade() {
+ 		MTD_CONFIG_ARGS="-s 0x200000"
+ 		default_do_upgrade "$1"
+ 		;;
++	xiaomi,r3d)
++		platform_do_upgrade_xiaomi "$1" 0x2800000
++		;;
+ 	zyxel,nbg6817)
+ 		zyxel_do_upgrade "$1"
+ 		;;
 diff --git a/target/linux/ipq806x/base-files/lib/upgrade/xiaomi.sh b/target/linux/ipq806x/base-files/lib/upgrade/xiaomi.sh
 new file mode 100644
 index 0000000000000..9246e8f867e3f
