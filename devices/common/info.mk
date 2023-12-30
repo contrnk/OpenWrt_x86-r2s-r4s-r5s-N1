@@ -8,4 +8,4 @@ export OPENWRT_VERBOSE=s
 include rules.mk
 include $(INCLUDE_DIR)/target.mk
 
-kernel_version: 
+kernel_version: v6.1
