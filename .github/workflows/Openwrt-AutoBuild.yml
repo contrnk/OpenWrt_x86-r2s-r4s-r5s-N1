@@ -142,7 +142,7 @@ jobs:
            -H "Authorization: Bearer ${{ secrets.TOKEN_KIDDIN9 }}" \
            -X POST -d '{ "query": "query {repository(owner: \"openwrt\", name: \"openwrt\") {refs(refPrefix: \"refs/tags/\", last: 4, orderBy: {field: TAG_COMMIT_DATE, direction: ASC}) {edges {node {name}}}}}"}' https://api.github.com/graphql) | jq -r '.data.repository.refs.edges[].node.name' | grep v23 | tail -n 1)"
         echo "CONFIG_VERSION_REPO=\"https://dl.openwrt.ai/`echo $REPO_BRANCH  | cut -d . -f 1,2 | sed -e 's/^v//'`\"">>devices/common/.config
-        if [[ ! "${{ env.REPO_BRANCH }}" && "$REPO_URL" == "https://github.com/contrnk/fix7800" ]]; then
+        if [[ ! "${{ env.REPO_BRANCH }}" && "$REPO_URL" == "https://github.com/contrnk/openwrt" ]]; then
             git clone $REPO_URL -b $REPO_BRANCH openwrt
         elif [[ ! "${{ env.REPO_BRANCH }}" ]]; then
             git clone $REPO_URL openwrt
@@ -179,6 +179,28 @@ jobs:
           echo "/bin/bash devices/${{matrix.target}}/$DIY_SH"
           /bin/bash "devices/${{matrix.target}}/$DIY_SH"
         fi
+
+    - name: Apply patches
+      run: |
+        cd openwrt
+        find "devices/common/patches" -type f ! -name 'china_mirrors.patch' -name '*.patch' ! -name '*.revert.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -B --merge -p1 -E --forward"
+        #git apply devices/common/patches/*.patch
+        if [ -n "$(ls -A devices/${{matrix.target}}/patches 2>/dev/null)" ]; then
+          if [ -n "$(ls -A devices/${{matrix.target}}/*.bin.patch 2>/dev/null)" ]; then
+            git apply devices/${{matrix.target}}/patches/*.bin.patch
+          fi
+          find "devices/${{matrix.target}}/patches" -maxdepth 1 -type f -name '*.patch' ! -name '*.revert.patch' ! -name '*.bin.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -B --merge -p1 -E --forward"
+          find "devices/${{matrix.target}}/patches" -maxdepth 1 -type f -name '*.revert.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -R -B --merge -p1 -E --forward"
+        fi
+        sed -i '$a  \
+        CONFIG_CPU_FREQ_GOV_POWERSAVE=y \
+        CONFIG_CPU_FREQ_GOV_USERSPACE=y \
+        CONFIG_CPU_FREQ_GOV_ONDEMAND=y \
+        CONFIG_CPU_FREQ_GOV_CONSERVATIVE=y \
+        CONFIG_CRYPTO_CHACHA20_NEON=y \
+        CONFIG_CRYPTO_CHACHA20POLY1305=y \
+        CONFIG_FAT_DEFAULT_IOCHARSET="utf8" \
+        ' `find target/linux -path "target/linux/*/config-*"`
 
     - name: Defconfig
       run: |
